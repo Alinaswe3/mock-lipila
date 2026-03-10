@@ -24,7 +24,6 @@ type MobileMoneyCollectionRequest struct {
 	AccountNumber string          `json:"accountNumber"`
 	Currency      string          `json:"currency"`
 	Narration     string          `json:"narration"`
-	CallbackURL   *string         `json:"callbackUrl,omitempty"`
 	CustomerInfo  json.RawMessage `json:"customerInfo,omitempty"`
 }
 
@@ -55,7 +54,6 @@ type CardCollectionDetails struct {
 	BackURL       string  `json:"backUrl"`
 	RedirectURL   string  `json:"redirectUrl"`
 	Narration     string  `json:"narration"`
-	CallbackURL   *string `json:"callbackUrl,omitempty"`
 }
 
 // MobileMoneyDisbursementRequest is the JSON body for POST /api/v1/disbursements/mobile-money.
@@ -65,7 +63,6 @@ type MobileMoneyDisbursementRequest struct {
 	AccountNumber string  `json:"accountNumber"`
 	Currency      string  `json:"currency"`
 	Narration     string  `json:"narration,omitempty"`
-	CallbackURL   *string `json:"callbackUrl,omitempty"`
 }
 
 // BankDisbursementRequest is the JSON body for POST /api/v1/disbursements/bank.
@@ -81,7 +78,6 @@ type BankDisbursementRequest struct {
 	AccountHolderName string  `json:"accountHolderName"`
 	PhoneNumber       string  `json:"phoneNumber"`
 	Email             string  `json:"email,omitempty"`
-	CallbackURL       *string `json:"callbackUrl,omitempty"`
 }
 
 // DisbursementFeeRate is the percentage fee charged on mobile money disbursements (1.5%).
@@ -180,7 +176,7 @@ func (h *Handlers) HandleMobileMoneyCollection(w http.ResponseWriter, r *http.Re
 		AccountNumber: req.AccountNumber,
 		Narration:     req.Narration,
 		IPAddress:     clientIP(r),
-		CallbackURL:   req.CallbackURL,
+		CallbackURL:   callbackURLFromHeader(r),
 		CustomerInfo:  customerInfoPtr,
 	}
 
@@ -307,7 +303,7 @@ func (h *Handlers) HandleCardCollection(w http.ResponseWriter, r *http.Request) 
 		AccountNumber:   cr.AccountNumber,
 		Narration:       cr.Narration,
 		IPAddress:       clientIP(r),
-		CallbackURL:     cr.CallbackURL,
+		CallbackURL:     callbackURLFromHeader(r),
 		CardRedirectURL: &cardRedirectURL,
 		CustomerInfo:    customerInfoPtr,
 	}
@@ -540,7 +536,7 @@ func (h *Handlers) HandleMobileMoneyDisbursement(w http.ResponseWriter, r *http.
 		AccountNumber: req.AccountNumber,
 		Narration:     req.Narration,
 		IPAddress:     clientIP(r),
-		CallbackURL:   req.CallbackURL,
+		CallbackURL:   callbackURLFromHeader(r),
 	}
 
 	if err := h.DB.InsertTransaction(txn); err != nil {
@@ -672,7 +668,7 @@ func (h *Handlers) HandleBankDisbursement(w http.ResponseWriter, r *http.Request
 		AccountNumber: req.AccountNumber,
 		Narration:     req.Narration,
 		IPAddress:     clientIP(r),
-		CallbackURL:   req.CallbackURL,
+		CallbackURL:   callbackURLFromHeader(r),
 		CustomerInfo:  func() *json.RawMessage {
 			if len(customerInfoJSON) > 0 {
 				temp := json.RawMessage(customerInfoJSON)
@@ -754,6 +750,14 @@ func detectMNO(accountNumber string) string {
 	default:
 		return ""
 	}
+}
+
+// callbackURLFromHeader reads the callback URL from the callbackUrl request header.
+func callbackURLFromHeader(r *http.Request) *string {
+	if v := r.Header.Get("callbackUrl"); v != "" {
+		return &v
+	}
+	return nil
 }
 
 // getWalletID extracts the wallet ID from the request context (set by auth middleware).

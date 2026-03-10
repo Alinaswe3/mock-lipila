@@ -37,8 +37,11 @@ type CallbackPayload struct {
 // Retries up to 3 times with exponential backoff (2s, 4s, 8s).
 func (s *Simulator) sendCallback(txn *database.Transaction) {
 	if txn.CallbackURL == nil || *txn.CallbackURL == "" {
+		log.Printf("callback: skipped for txn=%s (no callback URL provided)", txn.ReferenceID)
 		return
 	}
+
+	log.Printf("callback: firing for txn=%s type=%s status=%s url=%s", txn.ReferenceID, txn.Type, txn.Status, *txn.CallbackURL)
 
 	payload := CallbackPayload{
 		ID:            txn.ID,
