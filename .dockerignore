@@ -1,0 +1,9 @@
+*.db
+*.exe
+*.dll
+.git
+.gitignore
+README.md
+build.bat
+build.sh
+main.exe
