@@ -743,7 +743,7 @@ func detectMNO(accountNumber string) string {
 	switch prefix {
 	case "26096", "26076":
 		return database.PayMtnMoney
-	case "26097", "26077":
+	case "26097", "26077", "26057":
 		return database.PayAirtelMoney
 	case "26095", "26075":
 		return database.PayZamtelKwacha
